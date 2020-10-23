@@ -1,0 +1,70 @@
+#!/bin/bash
+
+function ipset_cmd {
+declare -a N
+CDEL=0
+while [ -n "$*" ]; do
+	C="$1"
+	shift
+	[ "$C" = "del" ] && CDEL=1
+	if [ "$C" = "comment" ]; then
+		C="$1"
+		shift
+		N+=("comment" "\"$C\"")
+		continue
+	fi
+	if [ "$C" != "nat" ]; then
+		N+=("$C")
+		continue
+	fi
+	IPP="$1"
+	shift
+	[ "$CDEL" = "1" ] && continue
+	IP="${IPP%:*}"
+	P="${IPP#*:}"
+	if [ "$IPP" = "$IP" ]; then
+		P=0
+	fi
+	IP1="${IP%%.*}"; IP="${IP#*.}"
+	IP2="${IP%%.*}"; IP="${IP#*.}"
+	IP3="${IP%%.*}"; IP="${IP#*.}"
+	N+=("skbmark")
+	N+=(`printf '0x%02x%02x%02x%02x/0x%x' $IP1 $IP2 $IP3 $IP $P`)
+done
+ipset ${N[@]}
+}
+
+function ipset_list {
+( if [ -z "$*" ]; then ipset -L ; else ipset -L "$@"; fi ) |\
+awk '!/skbmark/{print $0}/skbmark/{
+ for(i=1;i<=NF;i++) { 
+  if($i == "skbmark") {
+	j=i+1; $i="NAT"; split($j,a,"/");
+	ip=strtonum(a[1]); port=strtonum(a[2]);
+	$j=sprintf("%d.%d.%d.%d:%d",
+	  and(rshift(ip,24),0xff),
+	  and(rshift(ip,16),0xff),
+	  and(rshift(ip,8),0xff),
+	  and(ip,0xff),
+	  and(port,0xffff))
+  }
+ }
+ print;
+}'
+}
+CMD="$1"
+shift
+case "$CMD" in
+(-A|add)
+	ipset_cmd "add" "$@"
+	;;
+(-D|del)
+	ipset_cmd "del" "$@"
+	;;
+(-L|list)
+	ipset_list "$@"
+	;;
+*)
+	echo "Unknown command '$CMD'"
+	exit 1
+esac
