@@ -144,7 +144,7 @@ set_target_v0(struct sk_buff *skb, const struct xt_action_param *par)
 	range.flags = NF_NAT_RANGE_MAP_IPS;
         range.min_addr.ip = range.max_addr.ip = htonl(nat_ip);
         range.min_proto.tcp.port = range.max_proto.tcp.port = htons(nat_port);
-
+	if(nat_port) range.flags |= NF_NAT_RANGE_PROTO_SPECIFIED;
         ct = nf_ct_get(skb, &ctinfo);
 
         ret = nf_nat_setup_info(ct, &range, nat_mode);
