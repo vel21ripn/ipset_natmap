@@ -37,7 +37,11 @@ ipset create nmap1 hash:ip,port --skbinfo --counters
 ipset create nmap2 hash:ip,port --skbinfo --counters
 
 iptables/ipnatset add nmap1 10.0.0.1,udp:1000 nat 10.0.0.3
-iptables/ipnatset add nmap2 10.0.0.1,udp:2000 nat 10.0.0.2:4000
+iptables/ipnatset add nmap2 10.0.0.1,udp:2000 nat 10.0.0.2
+iptables/ipnatset add nmap2 10.0.0.1,udp:2001 nat 10.0.0.2:4000
+iptables/ipnatset add nmap2 10.0.0.1,udp:2002 nat 10.0.0.4:2000
+iptables/ipnatset add nmap2 10.0.0.1,udp:2003 nat 10.0.0.6:1000
+iptables/ipnatset add nmap2 10.0.0.1,udp:2004 nat 10.0.0.8:3000
 
 iptables/ipnatset list
 
